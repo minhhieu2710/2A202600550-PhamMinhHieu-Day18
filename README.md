@@ -29,6 +29,21 @@ Lab gồm **2 phần**:
   └────────────┘
 ```
 
+## Prerequisites
+
+| Dependency | Bắt buộc? | Dùng cho |
+|-----------|-----------|----------|
+| Docker (Qdrant) | ✅ Có | M2 Dense Search |
+| Python 3.11+ | ✅ Có | Tất cả modules (RAGAS cần 3.11+ cho asyncio) |
+| `OPENAI_API_KEY` | ⚠️ M4+M5 | RAGAS eval (M4), Enrichment LLM (M5) |
+
+**Pre-download models** (tránh timeout trong lab):
+```bash
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-m3')"
+python -c "from sentence_transformers import CrossEncoder; CrossEncoder('BAAI/bge-reranker-v2-m3')"
+```
+
 ## Quick Start
 
 ```bash
@@ -63,15 +78,16 @@ lab18-production-rag/
 ├── docker-compose.yml          # Qdrant local
 ├── .env.example                # API keys template
 │
-├── data/                       # Corpus tiếng Việt (TaiLieuBot)
-│   ├── chinh_sach_nhan_su.md   # Nghỉ phép, thử việc, giờ làm
-│   ├── chinh_sach_cntt.md      # Mật khẩu, VPN, MFA, bảo mật
-│   ├── phuc_loi_luong_thuong.md # Lương, thưởng, bảo hiểm, phụ cấp
-│   ├── quy_dinh_chung.md       # Trang phục, công tác, WFH
+├── data/                       # Corpus tiếng Việt — 40 .md files + PDFs
+│   ├── nghi_phep_nam_v2023.md  # Nghỉ phép 12 ngày (v2023, superseded)
+│   ├── nghi_phep_nam_v2024.md  # Nghỉ phép 15 ngày (v2024, hiện hành)
+│   ├── mat_khau_v1.md          # Password policy 90 ngày (OLD)
+│   ├── mat_khau_v2.md          # Password policy 120 ngày + MFA (NEW)
+│   ├── ... (40 files total)    # 8 categories: leave, salary, IT, workflow, training, admin, safety, compliance
 │   ├── so_tay_an_toan.pdf      # An toàn PCCC + sơ cứu (PDF text)
 │   ├── BCTC.pdf                # Báo cáo tài chính (scan, cần OCR)
 │   └── Nghi_dinh_13-2023.pdf   # Nghị định BVDL (scan, cần OCR)
-├── test_set.json               # 25 Q&A pairs
+├── test_set.json               # 30 Q&A pairs (6 types: lookup, version, negation, multi-hop, numeric, ambiguous)
 │
 ├── src/                        # ★ Scaffold code (có TODO markers)
 │   ├── m1_chunking.py          # Module 1: Chunking

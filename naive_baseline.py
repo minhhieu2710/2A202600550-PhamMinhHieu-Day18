@@ -33,13 +33,35 @@ def main():
 
     test_set = load_test_set()
     questions, answers, all_contexts, ground_truths = [], [], [], []
-    for item in test_set:
+
+    from config import OPENAI_API_KEY
+    llm_client = None
+    if OPENAI_API_KEY:
+        from openai import OpenAI
+        llm_client = OpenAI()
+
+    for i, item in enumerate(test_set):
         results = search.search(item["question"], top_k=3, collection=NAIVE_COLLECTION)
         contexts = [r.text for r in results]
-        answers.append(contexts[0] if contexts else "Không tìm thấy.")
+
+        if llm_client and contexts:
+            try:
+                context_str = "\n\n".join(contexts)
+                resp = llm_client.chat.completions.create(model="gpt-4o-mini", messages=[
+                    {"role": "system", "content": "Trả lời CHỈ dựa trên context. Nếu không có → nói 'Không tìm thấy.'"},
+                    {"role": "user", "content": f"Context:\n{context_str}\n\nCâu hỏi: {item['question']}"},
+                ])
+                answer = resp.choices[0].message.content
+            except Exception:
+                answer = contexts[0]
+        else:
+            answer = contexts[0] if contexts else "Không tìm thấy."
+
+        answers.append(answer)
         questions.append(item["question"])
         all_contexts.append(contexts)
         ground_truths.append(item["ground_truth"])
+        print(f"  [{i+1}/{len(test_set)}] {item['question'][:50]}...", flush=True)
 
     results = evaluate_ragas(questions, answers, all_contexts, ground_truths)
     print("\nBASIC BASELINE SCORES")
